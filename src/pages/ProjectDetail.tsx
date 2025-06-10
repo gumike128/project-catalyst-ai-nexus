@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -28,10 +27,10 @@ import { EmptyState } from '../components/ui/EmptyState';
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const { getProject, deleteProject, analyzeProject } = useProjectStore();
+  const { projects, deleteProject, analyzeProject } = useProjectStore();
   const [activeTab, setActiveTab] = useState('overview');
   
-  const project = id ? getProject(id) : null;
+  const project = id ? projects.find(p => p.id === id) : null;
 
   useEffect(() => {
     if (!project && id) {

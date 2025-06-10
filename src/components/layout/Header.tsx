@@ -1,16 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Bell, User, Globe } from 'lucide-react';
+import { Search, Bell, User, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export const Header: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'sk' : 'en';
     i18n.changeLanguage(newLang);
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
   };
 
   return (
@@ -29,6 +35,20 @@ export const Header: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="gap-2"
+          >
+            {isDarkMode ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </Button>
+
           {/* Language Toggle */}
           <Button
             variant="ghost"

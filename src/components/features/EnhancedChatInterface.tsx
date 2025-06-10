@@ -1,312 +1,200 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  Send, 
-  Sparkles, 
-  Lightbulb, 
-  Zap,
-  Target,
-  TrendingUp,
-  MessageSquare,
-  Copy,
-  ThumbsUp,
-  ThumbsDown
-} from 'lucide-react';
+import { Send, Mic, Paperclip, Sparkles, Bot, User } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
+import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { useChatStore } from '../../stores/chatStore';
-import { generateContextualSuggestions } from '../../services/aiSuggestionsService';
+import { generateAIResponse, getSuggestedQuestions } from '../../services/aiService';
 
 interface EnhancedChatInterfaceProps {
   projectId?: string;
   context?: string;
 }
 
-interface SmartSuggestion {
-  id: string;
-  text: string;
-  category: 'quick' | 'deep' | 'action' | 'analysis';
-  icon: React.ComponentType<any>;
-}
-
 export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({ 
   projectId, 
-  context = 'project' 
+  context = 'general' 
 }) => {
-  const { t } = useTranslation();
-  const { messages, isTyping, sendMessage } = useChatStore();
-  const [inputValue, setInputValue] = useState('');
-  const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const { messages, addMessage } = useChatStore();
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [suggestions] = useState(getSuggestedQuestions(projectId));
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, [messages]);
 
-  useEffect(() => {
-    updateSuggestions();
-  }, [inputValue, context]);
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
 
-  const updateSuggestions = () => {
-    const contextualSuggestions = generateContextualSuggestions(context, inputValue);
+    const userMessage = input.trim();
+    setInput('');
     
-    const smartSuggestions: SmartSuggestion[] = [
-      {
-        id: '1',
-        text: 'Analyzuj aktuálny pokrok projektu',
-        category: 'analysis',
-        icon: TrendingUp
-      },
-      {
-        id: '2',
-        text: 'Navrhni optimalizáciu performance',
-        category: 'action',
-        icon: Zap
-      },
-      {
-        id: '3',
-        text: 'Identifikuj potenciálne riziká',
-        category: 'analysis',
-        icon: Target
-      },
-      {
-        id: '4',
-        text: 'Vytvor implementačný plán',
-        category: 'deep',
-        icon: MessageSquare
-      }
-    ];
+    // Add user message
+    addMessage({
+      id: Date.now().toString(),
+      text: userMessage,
+      sender: 'user',
+      timestamp: new Date(),
+      projectId
+    });
 
-    // Combine contextual and smart suggestions
-    const combinedSuggestions = [
-      ...smartSuggestions,
-      ...contextualSuggestions.map((text, index) => ({
-        id: `contextual-${index}`,
-        text,
-        category: 'quick' as const,
-        icon: Lightbulb
-      }))
-    ];
-
-    setSuggestions(combinedSuggestions.slice(0, 6));
-  };
-
-  const handleSendMessage = async () => {
-    if (inputValue.trim()) {
-      await sendMessage(inputValue, projectId);
-      setInputValue('');
-      setSelectedSuggestionIndex(-1);
+    setIsLoading(true);
+    
+    try {
+      // Generate AI response
+      const response = await generateAIResponse(userMessage, projectId);
+      
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        text: response,
+        sender: 'ai',
+        timestamp: new Date(),
+        projectId
+      });
+    } catch (error) {
+      console.error('Error generating response:', error);
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        text: 'Prepáčte, vyskytla sa chyba pri generovaní odpovede.',
+        sender: 'ai',
+        timestamp: new Date(),
+        projectId
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (selectedSuggestionIndex >= 0) {
-        handleSuggestionSelect(suggestions[selectedSuggestionIndex]);
-      } else {
-        handleSendMessage();
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(Math.max(-1, selectedSuggestionIndex - 1));
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(Math.min(suggestions.length - 1, selectedSuggestionIndex + 1));
-    } else if (e.key === 'Escape') {
-      setSelectedSuggestionIndex(-1);
-    }
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
   };
 
-  const handleSuggestionSelect = (suggestion: SmartSuggestion) => {
-    setInputValue(suggestion.text);
-    setSelectedSuggestionIndex(-1);
-    inputRef.current?.focus();
-  };
-
-  const handleCopyMessage = (content: string) => {
-    navigator.clipboard.writeText(content);
-  };
-
-  const handleMessageFeedback = (messageId: string, isPositive: boolean) => {
-    console.log(`Feedback for message ${messageId}: ${isPositive ? 'positive' : 'negative'}`);
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'quick': return 'bg-blue-100 text-blue-800';
-      case 'deep': return 'bg-purple-100 text-purple-800';
-      case 'action': return 'bg-green-100 text-green-800';
-      case 'analysis': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('sk-SK', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  const filteredMessages = projectId 
+    ? messages.filter(m => m.projectId === projectId)
+    : messages;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
+        {filteredMessages.length === 0 && (
+          <div className="text-center py-8">
+            <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Vitajte v AI asistentovi</h3>
+            <p className="text-muted-foreground mb-4">
+              Opýtajte sa na čokoľvek o vašom projekte
+            </p>
+            <div className="grid grid-cols-1 gap-2 max-w-md mx-auto">
+              {suggestions.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="text-left justify-start"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {filteredMessages.map((message) => (
           <div
             key={message.id}
-            className={`flex gap-3 ${
-              message.type === 'user' ? 'justify-end' : 'justify-start'
-            }`}
+            className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            {message.type === 'ai' && (
+            {message.sender === 'ai' && (
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary" />
+                <Bot className="w-4 h-4 text-primary" />
               </div>
             )}
             
-            <div className={`max-w-[80%] ${
-              message.type === 'user' ? 'order-first' : ''
-            }`}>
-              <div className={`rounded-lg p-4 ${
-                message.type === 'user'
-                  ? 'bg-primary text-primary-foreground ml-auto'
-                  : 'bg-muted'
-              }`}>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {message.content}
-                </p>
-              </div>
-              
-              <div className={`flex items-center gap-2 mt-2 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}>
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(message.timestamp)}
-                </span>
-                
-                {message.type === 'ai' && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyMessage(message.content)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageFeedback(message.id, true)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageFeedback(message.id, false)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <ThumbsDown className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Card className={`max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : ''}`}>
+              <CardContent className="p-3">
+                <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs opacity-70">
+                    {message.timestamp.toLocaleTimeString()}
+                  </span>
+                  {message.projectId && (
+                    <Badge variant="outline" className="text-xs">
+                      Project
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-            {message.type === 'user' && (
-              <div className="w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium">You</span>
+            {message.sender === 'user' && (
+              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                <User className="w-4 h-4" />
               </div>
             )}
           </div>
         ))}
-        
-        {/* Typing Indicator */}
-        {isTyping && (
-          <div className="flex gap-3 justify-start">
+
+        {isLoading && (
+          <div className="flex gap-3">
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
+              <Bot className="w-4 h-4 text-primary" />
             </div>
-            <div className="bg-muted rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <LoadingSpinner size="sm" />
-                <span className="text-sm">AI premýšľa...</span>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="p-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
         
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Smart Suggestions */}
-      {suggestions.length > 0 && inputValue.length < 3 && (
-        <div className="px-4 pb-2">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Smart návrhy</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {suggestions.map((suggestion, index) => {
-                  const Icon = suggestion.icon;
-                  return (
-                    <button
-                      key={suggestion.id}
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                      className={`text-left p-2 rounded-lg border transition-colors hover:bg-accent ${
-                        selectedSuggestionIndex === index ? 'bg-accent border-primary' : 'border-border'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Icon className="w-3 h-3" />
-                        <Badge className={getCategoryColor(suggestion.category)} variant="outline">
-                          {suggestion.category}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{suggestion.text}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Input Area */}
-      <div className="p-4 border-t border-border">
+      <div className="border-t p-4">
         <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            placeholder="Opýtajte sa AI asistenta..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isTyping}
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isTyping}
-          >
-            <Send className="w-4 h-4" />
+          <Button variant="outline" size="sm">
+            <Paperclip className="w-4 h-4" />
           </Button>
+          <Button variant="outline" size="sm">
+            <Mic className="w-4 h-4" />
+          </Button>
+          <div className="flex-1 relative">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Napíšte správu..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              disabled={isLoading}
+            />
+            <Button
+              size="sm"
+              className="absolute right-1 top-1 h-8 w-8 p-0"
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Tip: Použite šípky ↑↓ na navigáciu medzi návrhmi, Enter na odoslanie
-        </p>
+        
+        {/* Context indicator */}
+        {context && (
+          <div className="flex items-center gap-2 mt-2">
+            <Sparkles className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              Kontext: {context}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
