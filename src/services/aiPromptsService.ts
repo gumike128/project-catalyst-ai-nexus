@@ -104,7 +104,7 @@ export const generateContextualPrompts = (projectType: string, projectName: stri
   }
   
   // Add time-based prompts
-  const timeBasedPrompts = [
+  const timeBasedPrompts: AIPrompt[] = [
     {
       id: `time-${Date.now()}-1`,
       title: 'Deployment stratégia',
