@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +29,20 @@ export const Dashboard: React.FC = () => {
     initializeProjects();
   }, [initializeProjects]);
 
+  const convertFiltersToStoreFormat = (filterState: FilterState) => {
+    return {
+      searchQuery: filterState.search,
+      status: filterState.status === 'all' ? [] : [filterState.status],
+      type: filterState.type === 'all' ? [] : [filterState.type],
+      tags: [],
+      sortBy: filterState.sortBy as 'name' | 'createdAt' | 'updatedAt' | 'progress',
+      sortOrder: 'desc' as 'asc' | 'desc'
+    };
+  };
+
   const handleFiltersChange = (newFilters: FilterState) => {
     setFiltersState(newFilters);
-    setFilters(newFilters);
+    setFilters(convertFiltersToStoreFormat(newFilters));
   };
 
   const handleClearFilters = () => {
@@ -41,7 +53,7 @@ export const Dashboard: React.FC = () => {
       sortBy: 'updatedAt'
     };
     setFiltersState(clearedFilters);
-    setFilters(clearedFilters);
+    setFilters(convertFiltersToStoreFormat(clearedFilters));
   };
 
   return (
