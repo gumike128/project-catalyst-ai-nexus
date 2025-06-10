@@ -1,58 +1,37 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-  Send, 
-  MessageSquare, 
   Trash2, 
   Download,
-  User,
   Sparkles,
-  Clock
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useChatStore } from '../stores/chatStore';
+import { EnhancedChatInterface } from '../components/features/EnhancedChatInterface';
 import { getSuggestedQuestions } from '../services/aiService';
 
 export const AIAssistant: React.FC = () => {
   const { t } = useTranslation();
-  const { messages, isTyping, sendMessage, clearMessages } = useChatStore();
-  const [inputValue, setInputValue] = useState('');
+  const { clearMessages } = useChatStore();
+  const [context, setContext] = useState('general');
   const [suggestions] = useState(getSuggestedQuestions());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
-
-  const handleSendMessage = async () => {
-    if (inputValue.trim()) {
-      await sendMessage(inputValue);
-      setInputValue('');
-    }
+  const handleExportChat = () => {
+    // TODO: Implement chat export functionality
+    console.log('Exporting chat history...');
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
-  };
-
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  const contextOptions = [
+    { value: 'general', label: 'Všeobecné', color: 'bg-blue-100 text-blue-800' },
+    { value: 'project', label: 'Projekt', color: 'bg-green-100 text-green-800' },
+    { value: 'technical', label: 'Technické', color: 'bg-purple-100 text-purple-800' },
+    { value: 'planning', label: 'Plánovanie', color: 'bg-orange-100 text-orange-800' }
+  ];
 
   return (
     <div className="h-full flex flex-col p-6">
@@ -64,133 +43,99 @@ export const AIAssistant: React.FC = () => {
             {t('aiAssistant.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t('aiAssistant.subtitle')}
+            Inteligentný AI asistent s kontextovými návrhmi a analýzou
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={clearMessages}>
             <Trash2 className="w-4 h-4 mr-2" />
-            {t('aiAssistant.clearHistory')}
+            Vymazať históriu
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportChat}>
             <Download className="w-4 h-4 mr-2" />
-            {t('aiAssistant.exportChat')}
+            Exportovať chat
           </Button>
         </div>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Suggestions Sidebar */}
+        {/* Context & Settings Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('aiAssistant.suggestions')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {suggestions.map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  className="w-full text-left justify-start h-auto p-3 text-sm"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chat Area */}
-        <div className="lg:col-span-3 flex flex-col">
-          {/* Messages */}
-          <Card className="flex-1 flex flex-col">
-            <CardContent className="flex-1 p-0">
-              <div className="h-[600px] overflow-y-auto p-4 space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 ${
-                      message.type === 'user' ? 'justify-end' : 'justify-start'
+          <div className="space-y-4 sticky top-6">
+            {/* Context Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Kontext
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {contextOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setContext(option.value)}
+                    className={`w-full text-left p-2 rounded-lg border transition-colors ${
+                      context === option.value 
+                        ? 'bg-primary/10 border-primary' 
+                        : 'border-border hover:bg-accent'
                     }`}
                   >
-                    {message.type === 'ai' && (
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                      </div>
-                    )}
-                    
-                    <div className={`max-w-[80%] ${
-                      message.type === 'user' ? 'order-first' : ''
-                    }`}>
-                      <div className={`rounded-lg p-3 ${
-                        message.type === 'user'
-                          ? 'bg-primary text-primary-foreground ml-auto'
-                          : 'bg-muted'
-                      }`}>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                      </div>
-                      <div className={`flex items-center gap-1 mt-1 text-xs text-muted-foreground ${
-                        message.type === 'user' ? 'justify-end' : ''
-                      }`}>
-                        <Clock className="w-3 h-3" />
-                        {formatTime(message.timestamp)}
-                      </div>
-                    </div>
-
-                    {message.type === 'user' && (
-                      <div className="w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-secondary-foreground" />
-                      </div>
-                    )}
-                  </div>
+                    <Badge className={option.color} variant="outline">
+                      {option.label}
+                    </Badge>
+                  </button>
                 ))}
-                
-                {/* Typing Indicator */}
-                {isTyping && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="bg-muted rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <LoadingSpinner size="sm" />
-                        <span className="text-sm">{t('aiAssistant.thinking')}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Input Area */}
-          <div className="mt-4">
+            {/* Quick Stats */}
             <Card>
-              <CardContent className="p-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={t('aiAssistant.placeholder')}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    disabled={isTyping}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isTyping}
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Štatistiky
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Dnešné správy</p>
+                  <p className="text-2xl font-bold text-primary">12</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">AI odpovede</p>
+                  <p className="text-2xl font-bold text-green-600">8</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Priemerný čas odpovede</p>
+                  <p className="text-lg font-semibold">2.1s</p>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Suggested Topics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Populárne témy</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {suggestions.slice(0, 4).map((suggestion, index) => (
+                  <div key={index} className="p-2 bg-muted rounded-lg">
+                    <p className="text-sm">{suggestion}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
+        </div>
+
+        {/* Enhanced Chat Area */}
+        <div className="lg:col-span-3">
+          <Card className="h-[calc(100vh-200px)]">
+            <CardContent className="p-0 h-full">
+              <EnhancedChatInterface context={context} />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

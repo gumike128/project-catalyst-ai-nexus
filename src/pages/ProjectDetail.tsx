@@ -1,53 +1,53 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Tag, 
-  FileText, 
+  Edit3, 
+  Play, 
+  Trash2, 
+  Brain,
+  FileText,
   MessageSquare,
-  BarChart3,
-  Play,
-  Edit3,
-  Download
+  Settings,
+  Lightbulb
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { EmptyState } from '../components/ui/EmptyState';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useProjectStore } from '../stores/projectStore';
 import { ProjectAnalysis } from '../components/features/ProjectAnalysis';
-import { ProjectFiles } from '../components/features/ProjectFiles';
 import { ProjectNotes } from '../components/features/ProjectNotes';
+import { ProjectIntelligenceComponent } from '../components/features/ProjectIntelligence';
+import { EnhancedChatInterface } from '../components/features/EnhancedChatInterface';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const ProjectDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const { getProjectById, analyzeProject, isLoading } = useProjectStore();
+  const { id } = useParams<{ id: string }>();
+  const { getProject, deleteProject, analyzeProject } = useProjectStore();
+  const [activeTab, setActiveTab] = useState('overview');
   
-  const project = id ? getProjectById(id) : null;
+  const project = id ? getProject(id) : null;
 
   useEffect(() => {
-    if (project) {
-      // Set as current project for context
+    if (!project && id) {
+      console.log('Project not found:', id);
     }
-  }, [project]);
+  }, [project, id]);
 
   if (!project) {
     return (
       <div className="p-6">
         <EmptyState
           icon={FileText}
-          title="Project not found"
-          description="The project you're looking for doesn't exist or has been deleted."
+          title="Projekt nenájdený"
+          description="Projekt s týmto ID neexistuje alebo bol odstránený."
           action={{
-            label: "Back to Dashboard",
+            label: "Späť na dashboard",
             onClick: () => window.history.back()
           }}
         />
@@ -55,14 +55,19 @@ export const ProjectDetail: React.FC = () => {
     );
   }
 
-  const handleAnalyze = async () => {
-    if (project.id) {
-      await analyzeProject(project.id, 'deep');
+  const handleDelete = async () => {
+    if (confirm('Ste si istí, že chcete odstrániť tento projekt?')) {
+      deleteProject(project.id);
+      window.location.href = '/';
     }
   };
 
+  const handleAnalyze = async () => {
+    await analyzeProject(project.id, 'deep');
+  };
+
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('sk-SK', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -71,197 +76,195 @@ export const ProjectDetail: React.FC = () => {
     }).format(date);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'bg-yellow-100 text-yellow-800';
+      case 'analyzing': return 'bg-blue-100 text-blue-800';
+      case 'complete': return 'bg-green-100 text-green-800';
+      case 'error': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t('common.back')}
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge variant="secondary">{t(`types.${project.type}`)}</Badge>
-            <Badge variant={project.status === 'complete' ? 'default' : 'secondary'}>
-              {t(`status.${project.status}`)}
-            </Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" asChild>
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Späť
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+            <p className="text-muted-foreground mt-1">{project.description}</p>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
-          <p className="text-muted-foreground mt-1">{project.description}</p>
         </div>
+        
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Edit3 className="w-4 h-4 mr-2" />
-            {t('common.edit')}
+          <Button variant="outline" onClick={handleAnalyze} disabled={project.status === 'analyzing'}>
+            <Play className="w-4 h-4 mr-2" />
+            {project.status === 'analyzing' ? 'Analyzujem...' : 'Spustiť analýzu'}
           </Button>
-          <Button onClick={handleAnalyze} disabled={isLoading} size="sm">
-            {isLoading ? (
-              <LoadingSpinner size="sm" className="mr-2" />
-            ) : (
-              <Play className="w-4 h-4 mr-2" />
-            )}
-            {t('project.analyzeProject')}
+          <Button variant="outline">
+            <Edit3 className="w-4 h-4 mr-2" />
+            Upraviť
+          </Button>
+          <Button variant="outline" onClick={handleDelete}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            Odstrániť
           </Button>
         </div>
       </div>
 
-      {/* Project Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Project Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              {t('project.progress')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-2xl font-bold">{project.progress}%</span>
-                <span className="text-sm text-muted-foreground">Complete</span>
-              </div>
-              <Progress value={project.progress} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {t('project.createdAt')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-1">
-              {formatDate(project.createdAt)}
-            </p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              Updated {formatDate(project.updatedAt)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              {t('project.tags')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-1">
-              {project.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <Badge className={getStatusColor(project.status)} variant="outline">
+                  {t(`status.${project.status}`)}
                 </Badge>
-              ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Pokrok</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Progress value={project.progress} className="flex-1" />
+                <span className="text-sm font-medium">{project.progress}%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Typ</p>
+              <p className="font-semibold">{t(`types.${project.type}`)}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Posledná aktualizácia</p>
+              <p className="text-sm font-medium">{formatDate(project.updatedAt)}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">{t('project.overview')}</TabsTrigger>
-          <TabsTrigger value="analysis">{t('project.analysis')}</TabsTrigger>
-          <TabsTrigger value="files">{t('project.files')}</TabsTrigger>
-          <TabsTrigger value="notes">{t('project.notes')}</TabsTrigger>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Prehľad
+          </TabsTrigger>
+          <TabsTrigger value="intelligence" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            AI Intelligence
+          </TabsTrigger>
+          <TabsTrigger value="analysis" className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Analýza
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Poznámky
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            AI Chat
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Project Metrics */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('project.metrics')}</CardTitle>
+                <CardTitle>Detaily projektu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('project.complexity')}</p>
-                    <p className="text-lg font-semibold">{project.metrics.complexity}/10</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('project.estimatedHours')}</p>
-                    <p className="text-lg font-semibold">{project.metrics.estimatedHours}h</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('project.riskLevel')}</p>
-                    <Badge variant={
-                      project.metrics.riskLevel === 'low' ? 'default' : 
-                      project.metrics.riskLevel === 'medium' ? 'secondary' : 'destructive'
-                    }>
-                      {project.metrics.riskLevel}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('project.successProbability')}</p>
-                    <p className="text-lg font-semibold">{project.metrics.successProbability}%</p>
-                  </div>
-                </div>
-                
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">{t('project.resourcesNeeded')}</p>
-                  <div className="space-y-1">
-                    {project.metrics.resourcesNeeded.map((resource, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {resource}
+                  <label className="text-sm font-medium text-muted-foreground">Názov</label>
+                  <p className="font-semibold">{project.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Popis</label>
+                  <p className="text-sm">{project.description}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Vytvorené</label>
+                  <p className="text-sm">{formatDate(project.createdAt)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Tags</label>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {project.tags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
                       </Badge>
                     ))}
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Recent Activity */}
+            
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle>Rýchle akcie</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">Analysis completed</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">Files uploaded</p>
-                      <p className="text-xs text-muted-foreground">1 day ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">Project created</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(project.createdAt)}</p>
-                    </div>
-                  </div>
-                </div>
+              <CardContent className="space-y-3">
+                <Button className="w-full justify-start gap-2" onClick={handleAnalyze}>
+                  <Brain className="w-4 h-4" />
+                  Spustiť AI analýzu
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Settings className="w-4 h-4" />
+                  Upraviť nastavenia
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <FileText className="w-4 h-4" />
+                  Exportovať report
+                </Button>
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="intelligence">
+          <ProjectIntelligenceComponent project={project} />
         </TabsContent>
 
         <TabsContent value="analysis">
           <ProjectAnalysis project={project} />
         </TabsContent>
 
-        <TabsContent value="files">
-          <ProjectFiles project={project} />
-        </TabsContent>
-
         <TabsContent value="notes">
           <ProjectNotes project={project} />
+        </TabsContent>
+
+        <TabsContent value="chat">
+          <Card className="h-[600px]">
+            <CardContent className="p-0 h-full">
+              <EnhancedChatInterface 
+                projectId={project.id} 
+                context={`project-${project.type}`} 
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
