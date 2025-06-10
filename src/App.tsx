@@ -10,7 +10,7 @@ import { CreativeStudio } from './pages/CreativeStudio';
 import { Settings } from './pages/Settings';
 import { LLMProviderSettings } from './pages/LLMProviderSettings';
 import { UserProfile } from './pages/UserProfile';
-import NotFound from './pages/NotFound';
+import { NotFound } from './pages/NotFound';
 import './i18n';
 import './App.css';
 
