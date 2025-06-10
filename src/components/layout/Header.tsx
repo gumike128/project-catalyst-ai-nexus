@@ -1,13 +1,16 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Search, Bell, User, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export const Header: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.classList.contains('dark')
+  );
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'sk' : 'en';
@@ -15,9 +18,33 @@ export const Header: React.FC = () => {
   };
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Store preference
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
   };
+
+  // Initialize theme from localStorage on component mount
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    
+    setIsDarkMode(shouldBeDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   return (
     <header className="bg-card border-b border-border px-6 py-4">
@@ -66,8 +93,10 @@ export const Header: React.FC = () => {
           </Button>
 
           {/* Profile */}
-          <Button variant="ghost" size="sm">
-            <User className="w-4 h-4" />
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/profile">
+              <User className="w-4 h-4" />
+            </Link>
           </Button>
         </div>
       </div>
