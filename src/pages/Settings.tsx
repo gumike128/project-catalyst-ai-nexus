@@ -5,10 +5,11 @@ import {
   Settings as SettingsIcon, 
   User, 
   Globe, 
-  Bell,
-  Monitor,
-  Key,
-  Database
+  Bell, 
+  Palette,
+  Moon,
+  Sun,
+  Monitor
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -38,7 +39,7 @@ export const Settings: React.FC = () => {
           {t('settings.title')}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Spravujte nastavenia aplikácie a integrácie
+          Manage your application preferences and account settings
         </p>
       </div>
 
@@ -47,7 +48,7 @@ export const Settings: React.FC = () => {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="w-5 h-5" />
+              <User className="w-5 h-5" />
               {t('settings.general')}
             </CardTitle>
           </CardHeader>
@@ -69,31 +70,25 @@ export const Settings: React.FC = () => {
               </Select>
             </div>
 
-            {/* Display Settings */}
+            {/* Theme */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
-                <Monitor className="w-4 h-4" />
-                Zobrazenie
+                <Palette className="w-4 h-4" />
+                {t('settings.theme')}
               </Label>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="compact-mode">Kompaktný režim</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Zobraziť viac obsahu na obrazovke
-                    </p>
-                  </div>
-                  <Switch id="compact-mode" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="animations">Animácie</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Povoliť animácie rozhrania
-                    </p>
-                  </div>
-                  <Switch id="animations" defaultChecked />
-                </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Sun className="w-4 h-4" />
+                  {t('settings.lightMode')}
+                </Button>
+                <Button variant="default" className="flex items-center gap-2">
+                  <Moon className="w-4 h-4" />
+                  {t('settings.darkMode')}
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Monitor className="w-4 h-4" />
+                  {t('settings.autoMode')}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -123,63 +118,6 @@ export const Settings: React.FC = () => {
             <Button variant="outline" className="w-full">
               Manage Account
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* API Integration */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              API Integrácie
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>OpenAI API</Label>
-                    <p className="text-sm text-muted-foreground">
-                      GPT-4 a DALL-E integrácia
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-green-600">Aktívne</Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Google Gemini</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Gemini Pro AI model
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">Konfigurovať</Button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Anthropic Claude</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Claude AI asistent
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">Pridať</Button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Supabase</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Database a autentifikácia
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-green-600">Pripojené</Badge>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
