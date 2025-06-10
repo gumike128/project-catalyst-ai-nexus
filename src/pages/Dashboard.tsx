@@ -1,26 +1,48 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, FolderOpen, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ProjectCard } from '../components/features/ProjectCard';
-import { ProjectFilters } from '../components/features/ProjectFilters';
+import { ProjectFilters, FilterState } from '../components/features/ProjectFilters';
 import { StatsCard } from '../components/features/StatsCard';
 import { useProjectStore } from '../stores/projectStore';
 import { getProjectStats } from '../services/mockData';
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
-  const { getFilteredProjects, initializeProjects } = useProjectStore();
+  const { getFilteredProjects, initializeProjects, setFilters } = useProjectStore();
   
+  const [filters, setFiltersState] = useState<FilterState>({
+    search: '',
+    status: 'all',
+    type: 'all',
+    sortBy: 'updatedAt'
+  });
+
   const projects = getFilteredProjects();
   const stats = getProjectStats();
 
   useEffect(() => {
     initializeProjects();
   }, [initializeProjects]);
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFiltersState(newFilters);
+    setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters: FilterState = {
+      search: '',
+      status: 'all',
+      type: 'all',
+      sortBy: 'updatedAt'
+    };
+    setFiltersState(clearedFilters);
+    setFilters(clearedFilters);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -74,7 +96,11 @@ export const Dashboard: React.FC = () => {
         {/* Filters */}
         <div className="lg:col-span-1">
           <div className="sticky top-6">
-            <ProjectFilters />
+            <ProjectFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
+            />
           </div>
         </div>
 
