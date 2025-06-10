@@ -9,7 +9,8 @@ import {
   Settings, 
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -20,7 +21,7 @@ const navigationItems = [
     icon: BarChart3
   },
   {
-    name: 'projects',
+    name: 'projects', 
     href: '/projects',
     icon: FolderOpen
   },
@@ -28,6 +29,11 @@ const navigationItems = [
     name: 'aiAssistant',
     href: '/assistant',
     icon: MessageSquare
+  },
+  {
+    name: 'creativeStudio',
+    href: '/creative-studio',
+    icon: Wand2
   },
   {
     name: 'settings',
@@ -66,7 +72,9 @@ export const Sidebar: React.FC = () => {
         <ul className="space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || 
+              (item.href === '/projects' && location.pathname.startsWith('/project')) ||
+              (item.href === '/settings' && location.pathname.startsWith('/settings'));
             
             return (
               <li key={item.name}>

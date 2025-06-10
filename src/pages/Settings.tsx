@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -8,12 +9,17 @@ import {
   Bell,
   Monitor,
   Key,
-  Database
+  Brain,
+  Shield,
+  Database,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -29,6 +35,41 @@ export const Settings: React.FC = () => {
     i18n.changeLanguage(language);
   };
 
+  const settingsSections = [
+    {
+      title: 'AI & LLM Providers',
+      description: 'Spravujte AI modely a API kľúče',
+      icon: Brain,
+      href: '/settings/llm-providers',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
+    },
+    {
+      title: 'Bezpečnosť',
+      description: 'Nastavenia zabezpečenia a súkromia',
+      icon: Shield,
+      href: '/settings/security',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100'
+    },
+    {
+      title: 'Integrácie',
+      description: 'Pripojenia k externým službám',
+      icon: Zap,
+      href: '/settings/integrations',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100'
+    },
+    {
+      title: 'Databáza',
+      description: 'Správa dát a zálohovania',
+      icon: Database,
+      href: '/settings/database',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    }
+  ];
+
   return (
     <div className="p-6 space-y-6 max-w-4xl">
       {/* Header */}
@@ -40,6 +81,34 @@ export const Settings: React.FC = () => {
         <p className="text-muted-foreground mt-1">
           Spravujte nastavenia aplikácie a integrácie
         </p>
+      </div>
+
+      {/* Quick Settings Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {settingsSections.map((section) => (
+          <Card key={section.title} className="hover:shadow-md transition-shadow cursor-pointer group">
+            <Link to={section.href}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-lg ${section.bgColor} flex items-center justify-center`}>
+                      <section.icon className={`w-6 h-6 ${section.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold group-hover:text-primary transition-colors">
+                        {section.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {section.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -94,6 +163,15 @@ export const Settings: React.FC = () => {
                   </div>
                   <Switch id="animations" defaultChecked />
                 </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="auto-save">Automatické ukladanie</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automaticky ukladať zmeny
+                    </p>
+                  </div>
+                  <Switch id="auto-save" defaultChecked />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -120,18 +198,18 @@ export const Settings: React.FC = () => {
               <Label className="text-sm text-muted-foreground">Member since</Label>
               <p className="font-medium">January 2024</p>
             </div>
-            <Button variant="outline" className="w-full">
-              Manage Account
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/profile">Spravovať účet</Link>
             </Button>
           </CardContent>
         </Card>
 
-        {/* API Integration */}
+        {/* API Integration Status */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Key className="w-5 h-5" />
-              API Integrácie
+              Stav API Integrácií
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -154,7 +232,9 @@ export const Settings: React.FC = () => {
                       Gemini Pro AI model
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">Konfigurovať</Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/settings/llm-providers">Konfigurovať</Link>
+                  </Button>
                 </div>
               </div>
 
@@ -166,7 +246,9 @@ export const Settings: React.FC = () => {
                       Claude AI asistent
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">Pridať</Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/settings/llm-providers">Pridať</Link>
+                  </Button>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -179,6 +261,15 @@ export const Settings: React.FC = () => {
                   <Badge variant="outline" className="text-green-600">Pripojené</Badge>
                 </div>
               </div>
+            </div>
+            
+            <div className="pt-4 border-t">
+              <Button asChild>
+                <Link to="/settings/llm-providers">
+                  <Brain className="w-4 h-4 mr-2" />
+                  Spravovať všetkých AI providerov
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

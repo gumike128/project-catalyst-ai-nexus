@@ -3,280 +3,529 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   User, 
-  Mail, 
   Settings, 
   Bell, 
   Shield, 
-  Palette,
-  Brain,
+  Key, 
+  Camera,
   Save,
-  Upload
+  Edit3,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  Github,
+  Linkedin,
+  Globe
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Switch } from '../components/ui/switch';
 import { Textarea } from '../components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
 export const UserProfile: React.FC = () => {
   const { t } = useTranslation();
-  const [maxSuggestions, setMaxSuggestions] = useState(10);
-  const [profile, setProfile] = useState({
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
     name: 'John Doe',
     email: 'john.doe@example.com',
-    bio: 'AI enthusiast and project manager',
-    avatar: '/placeholder.svg'
+    phone: '+421 900 123 456',
+    location: 'Bratislava, Slovakia',
+    bio: 'Senior Full-Stack Developer s passion for AI and modern web technologies. Experienced in React, Node.js, and cloud architecture.',
+    company: 'Tech Innovations Ltd.',
+    website: 'https://johndoe.dev',
+    github: 'johndoe',
+    linkedin: 'johndoe',
+    joinDate: '2024-01-15'
   });
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
-    aiSuggestions: true,
-    weeklyReports: false,
-    realTimeUpdates: true,
-    autoAnalysis: false
+    pushNotifications: false,
+    weeklyReports: true,
+    projectUpdates: true,
+    marketingEmails: false,
+    twoFactorAuth: false,
+    publicProfile: true,
+    showEmail: false,
+    showPhone: false
   });
 
   const handleSave = () => {
-    console.log('Saving profile:', { profile, preferences, maxSuggestions });
-    // TODO: Implement profile save
+    // Save profile data
+    localStorage.setItem('userProfile', JSON.stringify(profileData));
+    localStorage.setItem('userPreferences', JSON.stringify(preferences));
+    setIsEditing(false);
+    // Show success toast
+    console.log('Profile saved successfully');
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePreferenceChange = (field: string, value: boolean) => {
+    setPreferences(prev => ({ ...prev, [field]: value }));
+  };
+
+  const stats = {
+    projectsCreated: 12,
+    aiPrompsUsed: 156,
+    analysesRun: 48,
+    totalTime: '34h 26m'
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="p-6 space-y-6 max-w-6xl">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-          <User className="w-8 h-8" />
-          Používateľský profil
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Spravujte svoj profil a nastavenia aplikácie
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <User className="w-8 h-8" />
+            Používateľský profil
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Spravujte svoj účet a osobné nastavenia
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {isEditing ? (
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(false)}>
+                Zrušiť
+              </Button>
+              <Button onClick={handleSave}>
+                <Save className="w-4 h-4 mr-2" />
+                Uložiť zmeny
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setIsEditing(true)}>
+              <Edit3 className="w-4 h-4 mr-2" />
+              Upraviť profil
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Info */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Osobné údaje
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-muted-foreground" />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Profile Summary */}
+        <Card className="lg:col-span-1">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="relative">
+                <Avatar className="w-24 h-24">
+                  <AvatarImage src="/placeholder.svg" alt={profileData.name} />
+                  <AvatarFallback className="text-2xl">
+                    {profileData.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
+              
               <div>
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  Nahrať foto
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1">
-                  JPG, PNG max. 5MB
-                </p>
-              </div>
-            </div>
-
-            {/* Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Meno</Label>
-                <Input
-                  id="name"
-                  value={profile.name}
-                  onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">O mne</Label>
-              <Textarea
-                id="bio"
-                value={profile.bio}
-                onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Napíšte niečo o sebe..."
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Štatistiky účtu
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm text-muted-foreground">Členstvo od</Label>
-              <p className="font-medium">Január 2024</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Vytvorené projekty</Label>
-              <p className="font-medium">12</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">AI interakcie</Label>
-              <p className="font-medium">148</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Posledná aktivita</Label>
-              <p className="font-medium">Dnes</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AI Settings */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5" />
-              AI Nastavenia
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxSuggestions">Maximálny počet AI odporúčaní</Label>
-                  <Select value={maxSuggestions.toString()} onValueChange={(value) => setMaxSuggestions(parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 odporúčaní</SelectItem>
-                      <SelectItem value="10">10 odporúčaní</SelectItem>
-                      <SelectItem value="15">15 odporúčaní</SelectItem>
-                      <SelectItem value="20">20 odporúčaní</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Počet odporúčaní zobrazovaných v AI Chat tabe
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="autoAnalysis">Automatická analýza projektov</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Spúšťa AI analýzu pri vytvorení projektu
-                    </p>
-                  </div>
-                  <Switch 
-                    id="autoAnalysis" 
-                    checked={preferences.autoAnalysis}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, autoAnalysis: checked }))}
-                  />
-                </div>
+                <h3 className="text-lg font-semibold">{profileData.name}</h3>
+                <p className="text-muted-foreground">{profileData.email}</p>
+                <p className="text-sm text-muted-foreground">{profileData.company}</p>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="aiSuggestions">AI odporúčania</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Zobrazovať AI odporúčania v dashboarde
-                    </p>
-                  </div>
-                  <Switch 
-                    id="aiSuggestions" 
-                    checked={preferences.aiSuggestions}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, aiSuggestions: checked }))}
-                  />
-                </div>
+              <div className="flex gap-2 mt-4">
+                <Badge variant="outline">Professional</Badge>
+                <Badge variant="outline" className="text-green-600">Verified</Badge>
+              </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="realTimeUpdates">Real-time aktualizácie</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Okamžité notifikácie o zmenách
-                    </p>
-                  </div>
-                  <Switch 
-                    id="realTimeUpdates" 
-                    checked={preferences.realTimeUpdates}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, realTimeUpdates: checked }))}
-                  />
-                </div>
+              {/* Social Links */}
+              <div className="flex gap-2 mt-4">
+                {profileData.website && (
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Globe className="w-4 h-4" />
+                  </Button>
+                )}
+                {profileData.github && (
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Github className="w-4 h-4" />
+                  </Button>
+                )}
+                {profileData.linkedin && (
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Linkedin className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Notifications */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Notifikácie
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="emailNotifications">Email notifikácie</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Dostávať emaily o aktualizáciách projektov
-                    </p>
-                  </div>
-                  <Switch 
-                    id="emailNotifications" 
-                    checked={preferences.emailNotifications}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, emailNotifications: checked }))}
-                  />
-                </div>
-              </div>
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <Tabs defaultValue="profile" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Profil
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Nastavenia
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Bezpečnosť
+              </TabsTrigger>
+              <TabsTrigger value="stats" className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                Štatistiky
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="weeklyReports">Týždenné reporty</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Súhrn aktivity za týždeň
-                    </p>
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Osobné informácie</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Meno a priezvisko</Label>
+                      <Input
+                        id="name"
+                        value={profileData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Telefón</Label>
+                      <Input
+                        id="phone"
+                        value={profileData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="location">Lokácia</Label>
+                      <Input
+                        id="location"
+                        value={profileData.location}
+                        onChange={(e) => handleInputChange('location', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="company">Spoločnosť</Label>
+                      <Input
+                        id="company"
+                        value={profileData.company}
+                        onChange={(e) => handleInputChange('company', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="website">Webstránka</Label>
+                      <Input
+                        id="website"
+                        value={profileData.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        disabled={!isEditing}
+                      />
+                    </div>
                   </div>
-                  <Switch 
-                    id="weeklyReports" 
-                    checked={preferences.weeklyReports}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, weeklyReports: checked }))}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Save Button */}
-        <div className="lg:col-span-3 flex justify-end">
-          <Button onClick={handleSave} className="gap-2">
-            <Save className="w-4 h-4" />
-            Uložiť zmeny
-          </Button>
+                  <div>
+                    <Label htmlFor="bio">O mne</Label>
+                    <Textarea
+                      id="bio"
+                      value={profileData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      disabled={!isEditing}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="github">GitHub username</Label>
+                      <Input
+                        id="github"
+                        value={profileData.github}
+                        onChange={(e) => handleInputChange('github', e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="username"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="linkedin">LinkedIn username</Label>
+                      <Input
+                        id="linkedin"
+                        value={profileData.linkedin}
+                        onChange={(e) => handleInputChange('linkedin', e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="preferences">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notifikácie a preferencie</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Email notifikácie</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="email-notifications">Email notifikácie</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Dostávať dôležité upozornenia emailom
+                          </p>
+                        </div>
+                        <Switch
+                          id="email-notifications"
+                          checked={preferences.emailNotifications}
+                          onCheckedChange={(checked) => handlePreferenceChange('emailNotifications', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="project-updates">Aktualizácie projektov</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Notifikácie o zmenách v projektoch
+                          </p>
+                        </div>
+                        <Switch
+                          id="project-updates"
+                          checked={preferences.projectUpdates}
+                          onCheckedChange={(checked) => handlePreferenceChange('projectUpdates', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="weekly-reports">Týždenné reporty</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Súhrn aktivít za týždeň
+                          </p>
+                        </div>
+                        <Switch
+                          id="weekly-reports"
+                          checked={preferences.weeklyReports}
+                          onCheckedChange={(checked) => handlePreferenceChange('weeklyReports', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="marketing-emails">Marketing emaily</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Novinky a tips o produktoch
+                          </p>
+                        </div>
+                        <Switch
+                          id="marketing-emails"
+                          checked={preferences.marketingEmails}
+                          onCheckedChange={(checked) => handlePreferenceChange('marketingEmails', checked)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Súkromie</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="public-profile">Verejný profil</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Povoliť ostatným vidieť váš profil
+                          </p>
+                        </div>
+                        <Switch
+                          id="public-profile"
+                          checked={preferences.publicProfile}
+                          onCheckedChange={(checked) => handlePreferenceChange('publicProfile', checked)}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="show-email">Zobraziť email</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Ukázať email vo verejnom profile
+                          </p>
+                        </div>
+                        <Switch
+                          id="show-email"
+                          checked={preferences.showEmail}
+                          onCheckedChange={(checked) => handlePreferenceChange('showEmail', checked)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="security">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bezpečnosť účtu</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="two-factor">Dvojfaktorová autentifikácia</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Pridajte extra vrstvu zabezpečenia
+                        </p>
+                      </div>
+                      <Switch
+                        id="two-factor"
+                        checked={preferences.twoFactorAuth}
+                        onCheckedChange={(checked) => handlePreferenceChange('twoFactorAuth', checked)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Heslo a prihlasovacie údaje</h4>
+                    <div className="space-y-3">
+                      <Button variant="outline" className="w-full justify-start">
+                        <Key className="w-4 h-4 mr-2" />
+                        Zmeniť heslo
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Shield className="w-4 h-4 mr-2" />
+                        Spravovať API kľúče
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Aktívne relácie</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">Aktuálna relácia</p>
+                          <p className="text-sm text-muted-foreground">Chrome na Windows • Bratislava, SK</p>
+                        </div>
+                        <Badge variant="outline" className="text-green-600">Aktívne</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="stats">
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-8 h-8 text-blue-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Projekty</p>
+                          <p className="text-2xl font-bold">{stats.projectsCreated}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Settings className="w-8 h-8 text-purple-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">AI Prompts</p>
+                          <p className="text-2xl font-bold">{stats.aiPrompsUsed}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Settings className="w-8 h-8 text-green-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Analýzy</p>
+                          <p className="text-2xl font-bold">{stats.analysesRun}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-8 h-8 text-orange-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Čas aktivity</p>
+                          <p className="text-2xl font-bold">{stats.totalTime}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Account Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Informácie o účte</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Typ účtu</Label>
+                        <p className="font-medium">Professional Plan</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Členstvo od</Label>
+                        <p className="font-medium">{new Date(profileData.joinDate).toLocaleDateString('sk-SK')}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Posledné prihlásenie</Label>
+                        <p className="font-medium">Dnes o 14:30</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Využitie API</Label>
+                        <p className="font-medium">1,234 / 10,000 požiadaviek</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
