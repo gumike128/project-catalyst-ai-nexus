@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -260,7 +261,9 @@ export const ProjectDetail: React.FC = () => {
             <CardContent className="p-0 h-full">
               <EnhancedChatInterface 
                 projectId={project.id} 
-                context={`project-${project.type}`} 
+                context={`project-${project.type}`}
+                projectType={project.type}
+                projectName={project.name}
               />
             </CardContent>
           </Card>
