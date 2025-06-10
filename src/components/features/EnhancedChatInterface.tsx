@@ -35,10 +35,8 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
     
     // Add user message
     addMessage({
-      id: Date.now().toString(),
-      text: userMessage,
-      sender: 'user',
-      timestamp: new Date(),
+      content: userMessage,
+      type: 'user',
       projectId
     });
 
@@ -49,19 +47,15 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
       const response = await generateAIResponse(userMessage, projectId);
       
       addMessage({
-        id: (Date.now() + 1).toString(),
-        text: response,
-        sender: 'ai',
-        timestamp: new Date(),
+        content: response,
+        type: 'ai',
         projectId
       });
     } catch (error) {
       console.error('Error generating response:', error);
       addMessage({
-        id: (Date.now() + 1).toString(),
-        text: 'Prepáčte, vyskytla sa chyba pri generovaní odpovede.',
-        sender: 'ai',
-        timestamp: new Date(),
+        content: 'Prepáčte, vyskytla sa chyba pri generovaní odpovede.',
+        type: 'ai',
         projectId
       });
     } finally {
@@ -106,17 +100,17 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
         {filteredMessages.map((message) => (
           <div
             key={message.id}
-            className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            {message.sender === 'ai' && (
+            {message.type === 'ai' && (
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                 <Bot className="w-4 h-4 text-primary" />
               </div>
             )}
             
-            <Card className={`max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : ''}`}>
+            <Card className={`max-w-[80%] ${message.type === 'user' ? 'bg-primary text-primary-foreground' : ''}`}>
               <CardContent className="p-3">
-                <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs opacity-70">
                     {message.timestamp.toLocaleTimeString()}
@@ -130,7 +124,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
               </CardContent>
             </Card>
 
-            {message.sender === 'user' && (
+            {message.type === 'user' && (
               <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
                 <User className="w-4 h-4" />
               </div>
