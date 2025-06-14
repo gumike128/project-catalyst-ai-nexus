@@ -24,12 +24,16 @@ import { ProjectNotes } from '../components/features/ProjectNotes';
 import { ProjectIntelligenceComponent } from '../components/features/ProjectIntelligence';
 import { EnhancedChatInterface } from '../components/features/EnhancedChatInterface';
 import { EmptyState } from '../components/ui/EmptyState';
+import { formatDate } from '../utils/dateUtils';
+import { getStatusConfig } from '../utils/uiUtils';
+import { ProjectService } from '../services/projectService';
 
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { projects, deleteProject, analyzeProject } = useProjectStore();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLoading, setIsLoading] = useState(false);
   
   const project = id ? projects.find(p => p.id === id) : null;
 
@@ -56,35 +60,32 @@ export const ProjectDetail: React.FC = () => {
   }
 
   const handleDelete = async () => {
-    if (confirm('Ste si istí, že chcete odstrániť tento projekt?')) {
-      deleteProject(project.id);
+    if (!confirm('Ste si istí, že chcete odstrániť tento projekt?')) return;
+    
+    setIsLoading(true);
+    const result = await ProjectService.safeDeleteProject(project.id, deleteProject);
+    
+    if (result.success) {
       window.location.href = '/';
+    } else {
+      console.error('Failed to delete project:', result.error);
+      // Here you could show a toast notification
     }
+    setIsLoading(false);
   };
 
   const handleAnalyze = async () => {
-    await analyzeProject(project.id, 'deep');
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('sk-SK', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'analyzing': return 'bg-blue-100 text-blue-800';
-      case 'complete': return 'bg-green-100 text-green-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+    setIsLoading(true);
+    const result = await ProjectService.safeAnalyzeProject(project.id, analyzeProject);
+    
+    if (!result.success) {
+      console.error('Failed to analyze project:', result.error);
+      // Here you could show a toast notification
     }
+    setIsLoading(false);
   };
+
+  const statusConfig = getStatusConfig(project.status);
 
   return (
     <div className="p-6 space-y-6">
@@ -104,7 +105,11 @@ export const ProjectDetail: React.FC = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleAnalyze} disabled={project.status === 'analyzing'}>
+          <Button 
+            variant="outline" 
+            onClick={handleAnalyze} 
+            disabled={project.status === 'analyzing' || isLoading}
+          >
             <Play className="w-4 h-4 mr-2" />
             {project.status === 'analyzing' ? 'Analyzujem...' : 'Spustiť analýzu'}
           </Button>
@@ -112,7 +117,7 @@ export const ProjectDetail: React.FC = () => {
             <Edit3 className="w-4 h-4 mr-2" />
             Upraviť
           </Button>
-          <Button variant="outline" onClick={handleDelete}>
+          <Button variant="outline" onClick={handleDelete} disabled={isLoading}>
             <Trash2 className="w-4 h-4 mr-2" />
             Odstrániť
           </Button>
@@ -126,7 +131,7 @@ export const ProjectDetail: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <Badge className={getStatusColor(project.status)} variant="outline">
+                <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`} variant="outline">
                   {t(`status.${project.status}`)}
                 </Badge>
               </div>
@@ -227,7 +232,7 @@ export const ProjectDetail: React.FC = () => {
                 <CardTitle>Rýchle akcie</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start gap-2" onClick={handleAnalyze}>
+                <Button className="w-full justify-start gap-2" onClick={handleAnalyze} disabled={isLoading}>
                   <Brain className="w-4 h-4" />
                   Spustiť AI analýzu
                 </Button>

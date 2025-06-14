@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +10,8 @@ import { Badge } from '../components/ui/badge';
 import { useProjectStore } from '../stores/projectStore';
 import { getProjectStats } from '../services/mockData';
 import { generateProjectSuggestions, AISuggestion } from '../services/aiSuggestionsService';
+import { getSuggestionColor } from '../utils/uiUtils';
+import { ProjectService } from '../services/projectService';
 
 interface DashboardSuggestion extends AISuggestion {
   projectName: string;
@@ -51,22 +52,6 @@ export const Dashboard: React.FC = () => {
       console.error('Error loading dashboard suggestions:', error);
     } finally {
       setIsLoadingSuggestions(false);
-    }
-  };
-
-  const getSuggestionColor = (type: string, priority: string) => {
-    if (priority === 'critical') return 'bg-red-50 border-red-200';
-    if (priority === 'high') return 'bg-orange-50 border-orange-200';
-    
-    switch (type) {
-      case 'task': return 'bg-blue-50 border-blue-200';
-      case 'improvement': return 'bg-green-50 border-green-200';
-      case 'technology': return 'bg-purple-50 border-purple-200';
-      case 'workflow': return 'bg-indigo-50 border-indigo-200';
-      case 'optimization': return 'bg-yellow-50 border-yellow-200';
-      case 'risk': return 'bg-red-50 border-red-200';
-      case 'feature': return 'bg-emerald-50 border-emerald-200';
-      default: return 'bg-gray-50 border-gray-200';
     }
   };
 

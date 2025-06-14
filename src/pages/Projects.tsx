@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -24,69 +25,31 @@ import { useProjectStore } from '../stores/projectStore';
 import { ProjectCard } from '../components/features/ProjectCard';
 import { ProjectFilters } from '../components/features/ProjectFilters';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ProjectService } from '../services/projectService';
+import { ProjectFilters as ProjectFiltersType } from '../types/enhanced';
 
 export const Projects: React.FC = () => {
   const { t } = useTranslation();
   const { projects, initializeProjects } = useProjectStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('updated');
+  const [filters, setFilters] = useState<ProjectFiltersType>({
+    searchTerm: '',
+    status: 'all',
+    type: 'all',
+    sortBy: 'updatedAt',
+    sortOrder: 'desc'
+  });
 
   useEffect(() => {
     initializeProjects();
   }, [initializeProjects]);
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || project.status === selectedStatus;
-    const matchesType = selectedType === 'all' || project.type === selectedType;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  const filteredProjects = ProjectService.filterProjects(projects, filters);
+  const sortedProjects = ProjectService.sortProjects(filteredProjects, filters.sortBy, filters.sortOrder);
+  const stats = ProjectService.calculateStats(projects);
 
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    switch (sortBy) {
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'created':
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      case 'updated':
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      case 'progress':
-        return b.progress - a.progress;
-      default:
-        return 0;
-    }
-  });
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'complete': return CheckCircle;
-      case 'analyzing': return BarChart3;
-      case 'draft': return Clock;
-      case 'error': return AlertCircle;
-      default: return FolderOpen;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'complete': return 'text-green-600';
-      case 'analyzing': return 'text-blue-600';
-      case 'draft': return 'text-yellow-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const stats = {
-    total: projects.length,
-    active: projects.filter(p => p.status === 'analyzing' || p.status === 'draft').length,
-    completed: projects.filter(p => p.status === 'complete').length,
-    errors: projects.filter(p => p.status === 'error').length
+  const handleFilterChange = (key: keyof ProjectFiltersType, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -172,13 +135,13 @@ export const Projects: React.FC = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Hľadať projekty..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filters.searchTerm}
+            onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
             className="pl-10"
           />
         </div>
         
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+        <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -191,7 +154,7 @@ export const Projects: React.FC = () => {
           </SelectContent>
         </Select>
 
-        <Select value={selectedType} onValueChange={setSelectedType}>
+        <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Typ" />
           </SelectTrigger>
@@ -204,13 +167,13 @@ export const Projects: React.FC = () => {
           </SelectContent>
         </Select>
 
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange('sortBy', value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Zoradiť podľa" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="updated">Posledná aktualizácia</SelectItem>
-            <SelectItem value="created">Dátum vytvorenia</SelectItem>
+            <SelectItem value="updatedAt">Posledná aktualizácia</SelectItem>
+            <SelectItem value="createdAt">Dátum vytvorenia</SelectItem>
             <SelectItem value="name">Názov</SelectItem>
             <SelectItem value="progress">Pokrok</SelectItem>
           </SelectContent>
@@ -222,7 +185,7 @@ export const Projects: React.FC = () => {
         <EmptyState
           icon={FolderOpen}
           title="Žiadne projekty"
-          description={searchTerm ? "Nenašli sa žiadne projekty zodpovedajúce vašim kritériám." : "Začnite vytvorením svojho prvého projektu."}
+          description={filters.searchTerm ? "Nenašli sa žiadne projekty zodpovedajúce vašim kritériám." : "Začnite vytvorením svojho prvého projektu."}
           action={{
             label: "Vytvoriť projekt",
             onClick: () => window.location.href = '/project/new'

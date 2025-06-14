@@ -8,10 +8,7 @@ import {
   MoreHorizontal, 
   Play, 
   Trash2, 
-  Edit3,
-  AlertCircle,
-  CheckCircle,
-  Loader2
+  Edit3
 } from 'lucide-react';
 import { Project } from '../../types';
 import { Button } from '../ui/button';
@@ -26,52 +23,44 @@ import {
 } from '../ui/dropdown-menu';
 import { useProjectStore } from '../../stores/projectStore';
 import { cn } from '../../lib/utils';
+import { formatDateShort } from '../../utils/dateUtils';
+import { getStatusConfig } from '../../utils/uiUtils';
+import { ProjectService } from '../../services/projectService';
 
 interface ProjectCardProps {
   project: Project;
 }
 
-const statusIcons = {
-  draft: Edit3,
-  analyzing: Loader2,
-  complete: CheckCircle,
-  error: AlertCircle
-};
-
-const statusColors = {
-  draft: 'bg-yellow-500/10 text-yellow-500',
-  analyzing: 'bg-blue-500/10 text-blue-500',
-  complete: 'bg-green-500/10 text-green-500',
-  error: 'bg-red-500/10 text-red-500'
-};
-
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   const { t } = useTranslation();
   const { deleteProject, analyzeProject } = useProjectStore();
   
-  const StatusIcon = statusIcons[project.status];
+  const statusConfig = getStatusConfig(project.status);
+  const StatusIcon = statusConfig.icon;
   const isAnalyzing = project.status === 'analyzing';
 
   const handleAnalyze = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    await analyzeProject(project.id, 'initial');
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (confirm('Are you sure you want to delete this project?')) {
-      deleteProject(project.id);
+    
+    const result = await ProjectService.safeAnalyzeProject(project.id, analyzeProject);
+    if (!result.success) {
+      console.error('Failed to analyze project:', result.error);
+      // Here you could show a toast notification
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date);
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (confirm('Are you sure you want to delete this project?')) {
+      const result = await ProjectService.safeDeleteProject(project.id, deleteProject);
+      if (!result.success) {
+        console.error('Failed to delete project:', result.error);
+        // Here you could show a toast notification
+      }
+    }
   };
 
   return (
@@ -85,7 +74,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
               </Badge>
               <div className={cn(
                 "flex items-center gap-1 px-2 py-1 rounded-full text-xs",
-                statusColors[project.status]
+                statusConfig.bgColor,
+                statusConfig.textColor
               )}>
                 <StatusIcon className={cn(
                   "w-3 h-3",
@@ -162,11 +152,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            {formatDate(project.createdAt)}
+            {formatDateShort(project.createdAt)}
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {formatDate(project.updatedAt)}
+            {formatDateShort(project.updatedAt)}
           </div>
         </div>
       </CardContent>
