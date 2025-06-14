@@ -481,7 +481,7 @@ export const UserProfile: React.FC = () => {
                           <p className="text-2xl font-bold">{stats.analysesRun}</p>
                         </div>
                       </div>
-                    </div>
+                    </CardContent>
                   </Card>
                   
                   <Card>
