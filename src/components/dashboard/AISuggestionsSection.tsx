@@ -1,22 +1,26 @@
 
 import React from 'react';
-import { Brain, Lightbulb, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Brain, RefreshCw, Lightbulb, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { EmptyState } from '../ui/EmptyState';
-import { getSuggestionColor } from '../../utils/uiUtils';
-import { AISuggestion } from '../../services/aiSuggestionsService';
 
-interface DashboardSuggestion extends AISuggestion {
-  projectName: string;
+interface AISuggestion {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  projectName?: string;
 }
 
 interface AISuggestionsSectionProps {
-  suggestions: DashboardSuggestion[];
+  suggestions: AISuggestion[];
   isLoading: boolean;
   onRefresh: () => void;
-  onSuggestionAction: (suggestion: DashboardSuggestion) => void;
+  onSuggestionAction: (suggestion: AISuggestion) => void;
 }
 
 export const AISuggestionsSection: React.FC<AISuggestionsSectionProps> = ({
@@ -25,75 +29,95 @@ export const AISuggestionsSection: React.FC<AISuggestionsSectionProps> = ({
   onRefresh,
   onSuggestionAction
 }) => {
+  const { t } = useTranslation();
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getSuggestionIcon = (type: string) => {
+    switch (type) {
+      case 'optimization': return TrendingUp;
+      case 'improvement': return Lightbulb;
+      default: return Brain;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
-            AI Odporúčania
+            <Brain className="w-5 h-5" />
+            AI Suggestions
           </CardTitle>
-          <Button variant="outline" onClick={onRefresh} disabled={isLoading}>
-            {isLoading ? 'Načítavam...' : 'Obnoviť'}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {suggestions.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Brain className="w-5 h-5 animate-pulse" />
+              Loading AI suggestions...
+            </div>
+          </div>
+        ) : suggestions.length === 0 ? (
           <EmptyState
-            icon={Lightbulb}
-            title="Žiadne odporúčania"
-            description="Vytvorte projekty a spustite analýzy pre získanie AI odporúčaní."
+            icon={Brain}
+            title="No suggestions available"
+            description="AI suggestions will appear here when available."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {suggestions.map((suggestion) => (
-              <Card 
-                key={suggestion.id} 
-                className={`hover:shadow-md transition-shadow cursor-pointer ${getSuggestionColor(suggestion.type, suggestion.priority)}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
+          <div className="space-y-4">
+            {suggestions.map((suggestion) => {
+              const IconComponent = getSuggestionIcon(suggestion.type);
+              return (
+                <div 
+                  key={`suggestion-${suggestion.id}-${suggestion.projectName || 'default'}`}
+                  className="p-4 border rounded-lg hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-xs">
-                          {suggestion.projectName}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
+                      <div className="flex items-center gap-2 mb-2">
+                        <IconComponent className="w-4 h-4 text-primary" />
+                        <h4 className="font-medium">{suggestion.title}</h4>
+                        <Badge className={getPriorityColor(suggestion.priority)}>
                           {suggestion.priority}
                         </Badge>
+                        {suggestion.projectName && (
+                          <Badge variant="outline" className="text-xs">
+                            {suggestion.projectName}
+                          </Badge>
+                        )}
                       </div>
-                      <h4 className="font-semibold text-sm mb-1">{suggestion.title}</h4>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      <p className="text-sm text-muted-foreground">
                         {suggestion.description}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Impact: {suggestion.estimatedImpact}/10</span>
-                        {suggestion.timeEstimate && <span>• {suggestion.timeEstimate}</span>}
-                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex gap-1">
-                      {suggestion.tags.slice(0, 2).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="ghost"
+                    <Button
+                      size="sm"
                       onClick={() => onSuggestionAction(suggestion)}
-                      className="gap-1 h-7 px-2"
                     >
-                      <Send className="w-3 h-3" />
-                      AI
+                      Apply
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>

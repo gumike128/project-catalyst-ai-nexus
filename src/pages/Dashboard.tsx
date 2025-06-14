@@ -12,44 +12,106 @@ interface DashboardSuggestion extends AISuggestion {
 }
 
 export const Dashboard: React.FC = () => {
-  const { projects, initializeProjects } = useProjectStore();
+  const { projects, initializeProjects, error } = useProjectStore();
   const [suggestions, setSuggestions] = useState<DashboardSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
   useEffect(() => {
-    initializeProjects();
-    loadDashboardSuggestions();
+    console.log('Dashboard: Initializing...');
+    try {
+      initializeProjects();
+      loadDashboardSuggestions();
+    } catch (error) {
+      console.error('Dashboard initialization error:', error);
+    }
   }, [initializeProjects]);
 
   const loadDashboardSuggestions = async () => {
+    console.log('Dashboard: Loading suggestions...');
     setIsLoadingSuggestions(true);
+    setSuggestionError(null);
+    
     try {
       const allSuggestions: DashboardSuggestion[] = [];
       
-      // Generate suggestions from all projects
-      for (const project of projects.slice(0, 3)) { // Limit to first 3 projects
-        const projectSuggestions = await generateProjectSuggestions(project);
-        const dashboardSuggestions = projectSuggestions
-          .slice(0, 2) // 2 suggestions per project
-          .map(suggestion => ({
-            ...suggestion,
-            projectName: project.name
-          }));
-        allSuggestions.push(...dashboardSuggestions);
+      // Safely get projects with validation
+      const availableProjects = Array.isArray(projects) ? projects : [];
+      
+      // Generate suggestions from available projects (max 3)
+      const projectsToProcess = availableProjects.slice(0, 3);
+      console.log('Processing projects for suggestions:', projectsToProcess.length);
+      
+      for (const project of projectsToProcess) {
+        try {
+          if (!project?.id || !project?.name) {
+            console.warn('Skipping invalid project:', project);
+            continue;
+          }
+
+          const projectSuggestions = await generateProjectSuggestions(project);
+          const dashboardSuggestions = projectSuggestions
+            .slice(0, 2) // 2 suggestions per project
+            .map(suggestion => ({
+              ...suggestion,
+              projectName: project.name
+            }));
+          
+          allSuggestions.push(...dashboardSuggestions);
+        } catch (projectError) {
+          console.warn(`Error generating suggestions for project ${project?.name}:`, projectError);
+        }
       }
       
+      console.log('Generated suggestions:', allSuggestions.length);
       setSuggestions(allSuggestions);
     } catch (error) {
-      console.error('Error loading dashboard suggestions:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error loading dashboard suggestions:', errorMessage);
+      setSuggestionError(errorMessage);
+      setSuggestions([]);
     } finally {
       setIsLoadingSuggestions(false);
     }
   };
 
   const handleSuggestionAction = async (suggestion: DashboardSuggestion) => {
-    console.log('Processing suggestion:', suggestion);
-    // TODO: Implement AI processing of suggestion
+    console.log('Dashboard: Processing suggestion:', suggestion);
+    try {
+      // TODO: Implement AI processing of suggestion
+      // For now, just log the action
+      console.log('Suggestion action triggered:', {
+        id: suggestion.id,
+        type: suggestion.type,
+        projectName: suggestion.projectName
+      });
+    } catch (error) {
+      console.error('Error processing suggestion:', error);
+    }
   };
+
+  if (error) {
+    console.error('Dashboard error state:', error);
+    return (
+      <div className="p-6 space-y-6">
+        <DashboardHeader />
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-red-800 font-medium">Error Loading Dashboard</h3>
+          <p className="text-red-700 text-sm mt-1">{error}</p>
+          <button 
+            onClick={() => {
+              console.log('Retrying dashboard initialization...');
+              initializeProjects();
+              loadDashboardSuggestions();
+            }}
+            className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -63,6 +125,13 @@ export const Dashboard: React.FC = () => {
         onRefresh={loadDashboardSuggestions}
         onSuggestionAction={handleSuggestionAction}
       />
+
+      {suggestionError && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="text-yellow-800 font-medium">Suggestion Loading Error</h4>
+          <p className="text-yellow-700 text-sm mt-1">{suggestionError}</p>
+        </div>
+      )}
 
       <QuickActionsSection />
     </div>
