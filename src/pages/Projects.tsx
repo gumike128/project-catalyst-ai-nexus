@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -238,7 +237,6 @@ export const Projects: React.FC = () => {
             <ProjectCard
               key={project.id}
               project={project}
-              viewMode={viewMode}
             />
           ))}
         </div>

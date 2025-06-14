@@ -148,7 +148,7 @@ export const generateContextualPrompts = (projectType: string, projectName: stri
   }
   
   // Universal contextual prompts
-  const universalPrompts = [
+  const universalPrompts: AIPrompt[] = [
     {
       id: `universal-${timestamp}-1`,
       title: 'DevOps Pipeline',
