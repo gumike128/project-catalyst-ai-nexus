@@ -6,21 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { EmptyState } from '../ui/EmptyState';
-
-interface AISuggestion {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  projectName?: string;
-}
+import { AISuggestion } from '../../services/aiSuggestionsService';
 
 interface AISuggestionsSectionProps {
-  suggestions: AISuggestion[];
+  suggestions: (AISuggestion & { projectName?: string })[];
   isLoading: boolean;
   onRefresh: () => void;
-  onSuggestionAction: (suggestion: AISuggestion) => void;
+  onSuggestionAction: (suggestion: AISuggestion & { projectName?: string }) => void;
 }
 
 export const AISuggestionsSection: React.FC<AISuggestionsSectionProps> = ({
@@ -33,6 +25,7 @@ export const AISuggestionsSection: React.FC<AISuggestionsSectionProps> = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
       case 'high': return 'bg-red-100 text-red-800 border-red-200';
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
@@ -83,11 +76,11 @@ export const AISuggestionsSection: React.FC<AISuggestionsSectionProps> = ({
           />
         ) : (
           <div className="space-y-4">
-            {suggestions.map((suggestion) => {
+            {suggestions.map((suggestion, index) => {
               const IconComponent = getSuggestionIcon(suggestion.type);
               return (
                 <div 
-                  key={`suggestion-${suggestion.id}-${suggestion.projectName || 'default'}`}
+                  key={`suggestion-${suggestion.id}-${index}`}
                   className="p-4 border rounded-lg hover:shadow-sm transition-shadow"
                 >
                   <div className="flex items-start justify-between gap-4">

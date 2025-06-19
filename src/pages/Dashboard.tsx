@@ -7,9 +7,9 @@ import { DashboardStats } from '../components/dashboard/DashboardStats';
 import { AISuggestionsSection } from '../components/dashboard/AISuggestionsSection';
 import { QuickActionsSection } from '../components/dashboard/QuickActionsSection';
 
-interface DashboardSuggestion extends AISuggestion {
+type DashboardSuggestion = AISuggestion & {
   projectName: string;
-}
+};
 
 export const Dashboard: React.FC = () => {
   const { projects, initializeProjects, error } = useProjectStore();
@@ -50,7 +50,7 @@ export const Dashboard: React.FC = () => {
           }
 
           const projectSuggestions = await generateProjectSuggestions(project);
-          const dashboardSuggestions = projectSuggestions
+          const dashboardSuggestions: DashboardSuggestion[] = projectSuggestions
             .slice(0, 2) // 2 suggestions per project
             .map(suggestion => ({
               ...suggestion,
