@@ -1,4 +1,3 @@
-
 export interface AISuggestion {
   id: string;
   type: 'optimization' | 'improvement' | 'security' | 'performance';
@@ -10,6 +9,7 @@ export interface AISuggestion {
   tags: string[];
   context: string;
   actionable: boolean;
+  timeEstimate?: string;
 }
 
 export interface ProjectIntelligence {

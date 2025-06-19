@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -70,6 +69,15 @@ export const ProjectIntelligenceComponent: React.FC<ProjectIntelligenceProps> = 
   const handleSuggestionAction = (suggestion: AISuggestion) => {
     console.log('Executing suggestion:', suggestion);
     // TODO: Implement suggestion execution
+  };
+
+  const getImpactValue = (impact: string): number => {
+    switch (impact) {
+      case 'high': return 8;
+      case 'medium': return 5;
+      case 'low': return 2;
+      default: return 0;
+    }
   };
 
   if (isLoading) {
@@ -185,6 +193,7 @@ export const ProjectIntelligenceComponent: React.FC<ProjectIntelligenceProps> = 
             <div className="space-y-4">
               {intelligence.suggestions.map((suggestion) => {
                 const Icon = typeIcons[suggestion.type];
+                const impactValue = getImpactValue(suggestion.estimatedImpact);
                 return (
                   <Card key={suggestion.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
@@ -214,7 +223,7 @@ export const ProjectIntelligenceComponent: React.FC<ProjectIntelligenceProps> = 
                               {suggestion.description}
                             </p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Impact: {suggestion.estimatedImpact}/10</span>
+                              <span>Impact: {suggestion.estimatedImpact}</span>
                               <span>Complexity: {suggestion.complexity}</span>
                               {suggestion.timeEstimate && <span>Čas: {suggestion.timeEstimate}</span>}
                             </div>
@@ -241,9 +250,9 @@ export const ProjectIntelligenceComponent: React.FC<ProjectIntelligenceProps> = 
                           ))}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Progress value={suggestion.estimatedImpact * 10} className="w-16 h-2" />
+                          <Progress value={impactValue * 10} className="w-16 h-2" />
                           <span className="text-xs text-muted-foreground">
-                            {suggestion.estimatedImpact}/10
+                            {suggestion.estimatedImpact}
                           </span>
                         </div>
                       </div>
