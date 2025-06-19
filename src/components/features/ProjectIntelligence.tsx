@@ -11,7 +11,9 @@ import {
   ArrowRight,
   CheckCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Shield,
+  Zap
 } from 'lucide-react';
 import { Project } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -35,13 +37,10 @@ const priorityColors = {
 };
 
 const typeIcons = {
-  task: Target,
-  improvement: TrendingUp,
-  technology: Brain,
-  workflow: RefreshCw,
   optimization: Star,
-  risk: AlertTriangle,
-  feature: Lightbulb
+  improvement: TrendingUp,
+  security: Shield,
+  performance: Zap
 };
 
 export const ProjectIntelligenceComponent: React.FC<ProjectIntelligenceProps> = ({ project }) => {
