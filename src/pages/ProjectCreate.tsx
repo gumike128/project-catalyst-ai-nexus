@@ -12,7 +12,8 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { useProjectStore } from '../stores/projectStore';
 import { ProjectService } from '../services/projectService';
-import { toast } from '../components/ui/use-toast';
+import { toast } from '../hooks/use-toast';
+import { Project } from '../types';
 
 export const ProjectCreate: React.FC = () => {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export const ProjectCreate: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: '',
+    type: '' as Project['type'] | '',
     tags: [] as string[]
   });
   const [tagInput, setTagInput] = useState('');
@@ -52,7 +53,22 @@ export const ProjectCreate: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = ProjectService.validateProject(formData);
+    if (!formData.type) {
+      toast({
+        title: "Chyba validácie",
+        description: "Typ projektu je povinný",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const validation = ProjectService.validateProject({
+      name: formData.name,
+      description: formData.description,
+      type: formData.type,
+      tags: formData.tags
+    });
+    
     if (!validation.isValid) {
       toast({
         title: "Chyba validácie",
@@ -68,9 +84,19 @@ export const ProjectCreate: React.FC = () => {
       addProject({
         name: formData.name,
         description: formData.description,
-        type: formData.type as any,
+        type: formData.type,
         tags: formData.tags,
-        status: 'draft'
+        status: 'draft',
+        progress: 0,
+        files: [],
+        notes: [],
+        metrics: {
+          complexity: 0,
+          estimatedHours: 0,
+          riskLevel: 'low',
+          successProbability: 0,
+          resourcesNeeded: []
+        }
       });
       
       toast({
@@ -130,8 +156,10 @@ export const ProjectCreate: React.FC = () => {
                   <SelectContent>
                     <SelectItem value="web">Web aplikácia</SelectItem>
                     <SelectItem value="mobile">Mobilná aplikácia</SelectItem>
-                    <SelectItem value="api">API projekt</SelectItem>
+                    <SelectItem value="desktop">Desktop aplikácia</SelectItem>
                     <SelectItem value="ai">AI/ML projekt</SelectItem>
+                    <SelectItem value="research">Výskum</SelectItem>
+                    <SelectItem value="other">Ostatné</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
