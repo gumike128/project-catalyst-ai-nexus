@@ -6,6 +6,7 @@ import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { DashboardStats } from '../components/dashboard/DashboardStats';
 import { AISuggestionsSection } from '../components/dashboard/AISuggestionsSection';
 import { QuickActionsSection } from '../components/dashboard/QuickActionsSection';
+import { toast } from '../hooks/use-toast';
 
 type DashboardSuggestion = AISuggestion & {
   projectName: string;
@@ -82,11 +83,24 @@ export const Dashboard: React.FC = () => {
         priority: suggestion.priority
       });
       
-      // Here you could implement actual suggestion processing
-      // For now, just show success feedback
+      toast({
+        title: "Odporúčanie spracované",
+        description: `Odporúčanie "${suggestion.title}" bolo úspešne spracované.`,
+      });
     } catch (error) {
       console.error('Error processing suggestion:', error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa spracovať odporúčanie.",
+        variant: "destructive"
+      });
     }
+  };
+
+  const handleRetry = () => {
+    console.log('Retrying dashboard initialization...');
+    initializeProjects();
+    loadDashboardSuggestions();
   };
 
   if (error) {
@@ -98,11 +112,7 @@ export const Dashboard: React.FC = () => {
           <h3 className="text-red-800 font-medium">Error Loading Dashboard</h3>
           <p className="text-red-700 text-sm mt-1">{error}</p>
           <button 
-            onClick={() => {
-              console.log('Retrying dashboard initialization...');
-              initializeProjects();
-              loadDashboardSuggestions();
-            }}
+            onClick={handleRetry}
             className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
           >
             Retry

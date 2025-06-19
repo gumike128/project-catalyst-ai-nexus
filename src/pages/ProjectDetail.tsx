@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   ArrowLeft, 
@@ -27,10 +27,12 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { formatDate } from '../utils/dateUtils';
 import { getStatusConfig } from '../utils/uiUtils';
 import { ProjectService } from '../services/projectService';
+import { toast } from '../hooks/use-toast';
 
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { projects, deleteProject, analyzeProject } = useProjectStore();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,7 @@ export const ProjectDetail: React.FC = () => {
           description="Projekt s týmto ID neexistuje alebo bol odstránený."
           action={{
             label: "Späť na dashboard",
-            onClick: () => window.history.back()
+            onClick: () => navigate('/')
           }}
         />
       </div>
@@ -63,26 +65,43 @@ export const ProjectDetail: React.FC = () => {
     if (!confirm('Ste si istí, že chcete odstrániť tento projekt?')) return;
     
     setIsLoading(true);
-    const result = await ProjectService.safeDeleteProject(project.id, deleteProject);
-    
-    if (result.success) {
-      window.location.href = '/';
-    } else {
-      console.error('Failed to delete project:', result.error);
-      // Here you could show a toast notification
+    try {
+      deleteProject(project.id);
+      toast({
+        title: "Projekt odstránený",
+        description: "Projekt bol úspešne odstránený.",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa odstrániť projekt.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleAnalyze = async () => {
     setIsLoading(true);
-    const result = await ProjectService.safeAnalyzeProject(project.id, analyzeProject);
-    
-    if (!result.success) {
-      console.error('Failed to analyze project:', result.error);
-      // Here you could show a toast notification
+    try {
+      await analyzeProject(project.id, 'deep');
+      toast({
+        title: "Analýza dokončená",
+        description: "AI analýza projektu bola úspešne dokončená.",
+      });
+    } catch (error) {
+      console.error('Failed to analyze project:', error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa spustiť analýzu projektu.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const statusConfig = getStatusConfig(project.status);
@@ -92,11 +111,9 @@ export const ProjectDetail: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Späť
-            </Link>
+          <Button variant="ghost" onClick={() => navigate('/')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Späť
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>

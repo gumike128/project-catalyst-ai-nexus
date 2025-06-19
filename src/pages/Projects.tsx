@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   Plus, 
@@ -30,6 +30,7 @@ import { ProjectFilters as ProjectFiltersType } from '../types/enhanced';
 
 export const Projects: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { projects, initializeProjects } = useProjectStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState<ProjectFiltersType>({
@@ -52,6 +53,10 @@ export const Projects: React.FC = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleCreateProject = () => {
+    navigate('/project/new');
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -69,11 +74,9 @@ export const Projects: React.FC = () => {
           <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
             {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
           </Button>
-          <Button asChild className="gap-2">
-            <Link to="/project/new">
-              <Plus className="w-4 h-4" />
-              Nový projekt
-            </Link>
+          <Button onClick={handleCreateProject} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Nový projekt
           </Button>
         </div>
       </div>
@@ -188,7 +191,7 @@ export const Projects: React.FC = () => {
           description={filters.searchTerm ? "Nenašli sa žiadne projekty zodpovedajúce vašim kritériám." : "Začnite vytvorením svojho prvého projektu."}
           action={{
             label: "Vytvoriť projekt",
-            onClick: () => window.location.href = '/project/new'
+            onClick: handleCreateProject
           }}
         />
       ) : (
