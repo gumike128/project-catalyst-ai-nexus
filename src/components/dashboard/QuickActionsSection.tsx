@@ -7,7 +7,7 @@ import { Card, CardContent } from '../ui/card';
 export const QuickActionsSection: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Link to="/projects" className="group">
+      <Link to="/project/new" className="group">
         <Card className="hover:shadow-md transition-shadow cursor-pointer group-hover:border-primary/50">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">

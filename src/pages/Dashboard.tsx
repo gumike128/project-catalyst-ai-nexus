@@ -35,10 +35,7 @@ export const Dashboard: React.FC = () => {
     try {
       const allSuggestions: DashboardSuggestion[] = [];
       
-      // Safely get projects with validation
       const availableProjects = Array.isArray(projects) ? projects : [];
-      
-      // Generate suggestions from available projects (max 3)
       const projectsToProcess = availableProjects.slice(0, 3);
       console.log('Processing projects for suggestions:', projectsToProcess.length);
       
@@ -51,7 +48,7 @@ export const Dashboard: React.FC = () => {
 
           const projectSuggestions = await generateProjectSuggestions(project);
           const dashboardSuggestions: DashboardSuggestion[] = projectSuggestions
-            .slice(0, 2) // 2 suggestions per project
+            .slice(0, 2)
             .map(suggestion => ({
               ...suggestion,
               projectName: project.name
@@ -78,13 +75,15 @@ export const Dashboard: React.FC = () => {
   const handleSuggestionAction = async (suggestion: DashboardSuggestion) => {
     console.log('Dashboard: Processing suggestion:', suggestion);
     try {
-      // TODO: Implement AI processing of suggestion
-      // For now, just log the action
       console.log('Suggestion action triggered:', {
         id: suggestion.id,
         type: suggestion.type,
-        projectName: suggestion.projectName
+        projectName: suggestion.projectName,
+        priority: suggestion.priority
       });
+      
+      // Here you could implement actual suggestion processing
+      // For now, just show success feedback
     } catch (error) {
       console.error('Error processing suggestion:', error);
     }

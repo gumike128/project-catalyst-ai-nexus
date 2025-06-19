@@ -1,11 +1,12 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from './components/ui/toaster';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { ProjectDetail } from './pages/ProjectDetail';
+import { ProjectCreate } from './pages/ProjectCreate';
 import { AIAssistant } from './pages/AIAssistant';
 import { CreativeStudio } from './pages/CreativeStudio';
 import { Settings } from './pages/Settings';
@@ -25,6 +26,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/project/new" element={<ProjectCreate />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/assistant" element={<AIAssistant />} />
             <Route path="/creative-studio" element={<CreativeStudio />} />
